@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gryd — Wireframe Landing Page v1</title>
+  <style>
+    /* ── Reset & base ────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f0;
+      color: #1a1a1a;
+    }
+
+    /* ── Wireframe palette ───────────────────────────── */
+    :root {
+      --bg:        #f5f5f0;
+      --surface:   #ffffff;
+      --border:    #c8c8c0;
+      --muted:     #9a9a8e;
+      --dark:      #1a1a1a;
+      --accent:    #2d6a4f;        /* brand green — placeholder */
+      --accent-lt: #d8f3dc;
+      --loss:      #c0392b;        /* red for loss framing */
+      --gain:      #2d6a4f;        /* green for gain framing */
+      --anno:      #f39c12;        /* orange for PM annotations */
+      --anno-bg:   #fff8e1;
+    }
+
+    /* ── Layout ──────────────────────────────────────── */
+    .page { max-width: 390px; margin: 0 auto; background: var(--surface); }
+
+    section { padding: 24px 20px; border-bottom: 1px solid var(--border); }
+
+    /* ── PM Annotation style ─────────────────────────── */
+    .anno {
+      background: var(--anno-bg);
+      border-left: 3px solid var(--anno);
+      padding: 8px 12px;
+      margin: 10px 0;
+      font-size: 11px;
+      color: #7a5c00;
+      line-height: 1.5;
+      border-radius: 0 4px 4px 0;
+    }
+    .anno strong { color: var(--anno); text-transform: uppercase; font-size: 10px; letter-spacing: .5px; display: block; margin-bottom: 2px; }
+
+    /* ── Placeholder box ─────────────────────────────── */
+    .ph {
+      background: #e8e8e0;
+      border: 1.5px dashed var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 12px;
+    }
+
+    /* ── Typography helpers ──────────────────────────── */
+    .label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    h1 { font-size: 26px; font-weight: 800; line-height: 1.2; }
+    h2 { font-size: 20px; font-weight: 700; line-height: 1.3; }
+    h3 { font-size: 16px; font-weight: 700; }
+    p  { font-size: 15px; line-height: 1.6; color: #444; }
+    .small { font-size: 12px; color: var(--muted); }
+
+    /* ── Section labels ──────────────────────────────── */
+    .section-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: #e8e8e0;
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-bottom: 14px;
+    }
+
+    /* ── Nav ─────────────────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo-ph { width: 100px; height: 28px; }
+    .nav-badge {
+      font-size: 11px;
+      background: var(--accent-lt);
+      color: var(--accent);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    /* ── Hero ────────────────────────────────────────── */
+    .hero { padding: 28px 20px 24px; }
+
+    .rupee-contrast {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0 14px;
+    }
+    .rupee-box {
+      flex: 1;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .rupee-box.loss { background: #fdf0ee; border: 1.5px solid #e8bdb8; }
+    .rupee-box.gain { background: var(--accent-lt); border: 1.5px solid #b7e4c7; }
+    .rupee-box .amount { font-size: 24px; font-weight: 800; }
+    .rupee-box.loss .amount { color: var(--loss); }
+    .rupee-box.gain .amount { color: var(--gain); }
+    .rupee-box .context { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .vs { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+    /* ── Calculator ──────────────────────────────────── */
+    .calc-box {
+      background: #f7f7f2;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 16px 0;
+    }
+    .calc-box .calc-label { font-size: 13px; font-weight: 600; margin-bottom: 10px; color: #333; }
+    .slider-track {
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(to right, var(--accent) 40%, #ddd 40%);
+      border-radius: 3px;
+      margin-bottom: 6px;
+      position: relative;
+    }
+    .slider-thumb {
+      width: 20px; height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      position: absolute;
+      top: -7px;
+      left: 38%;
+    }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .calc-result {
+      margin-top: 14px;
+      padding: 12px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1.5px dashed var(--loss);
+      text-align: center;
+    }
+    .calc-result .loss-amount { font-size: 22px; font-weight: 800; color: var(--loss); }
+    .calc-result .loss-label  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── CTA button ──────────────────────────────────── */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: var(--accent);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      border-radius: 10px;
+      border: none;
+      margin: 14px 0 8px;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 10px;
+      border: 1.5px solid var(--accent);
+      margin: 8px 0;
+      cursor: pointer;
+    }
+    .trust-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 6px; }
+
+    /* ── Problem section ─────────────────────────────── */
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .flow-node {
+      flex: 1;
+      padding: 10px 8px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .flow-node.neutral { background: #f0f0ea; border: 1px solid var(--border); color: #555; }
+    .flow-node.bad     { background: #fdf0ee; border: 1px solid #e8bdb8; color: var(--loss); }
+    .flow-node.good    { background: var(--accent-lt); border: 1px solid #b7e4c7; color: var(--gain); }
+    .flow-arrow { font-size: 16px; color: var(--muted); flex-shrink: 0; }
+    .flow-label { font-size: 10px; font-weight: 400; display: block; margin-top: 2px; }
+
+    /* ── How it works ────────────────────────────────── */
+    .step-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin: 12px 0;
+    }
+    .step-num {
+      width: 28px; height: 28px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-content h3 { font-size: 14px; margin-bottom: 2px; }
+    .step-content p  { font-size: 13px; color: #666; }
+    .badge-soon {
+      display: inline-block;
+      font-size: 10px;
+      background: #fff3cd;
+      color: #856404;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+
+    /* ── Why now (regulatory) ────────────────────────── */
+    .reg-card {
+      background: #f7f7f2;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin: 10px 0;
+    }
+    .reg-card .reg-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .reg-card .reg-body  { font-size: 12px; color: #666; line-height: 1.5; }
+    .reg-card .reg-tag   {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      background: var(--accent-lt);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+
+    /* ── Society section ─────────────────────────────── */
+    .society-card {
+      background: #f0f7ff;
+      border: 1.5px solid #b8d4f0;
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    /* ── Full form ───────────────────────────────────── */
+    .form-field { margin: 12px 0; }
+    .form-field label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+    .form-field .input-ph {
+      width: 100%;
+      height: 44px;
+      background: #f7f7f2;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .form-field .select-ph {
+      width: 100%;
+      height: 44px;
+      background: #f7f7f2;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Floating CTA (mobile sticky) ───────────────── */
+    .sticky-cta {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 390px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px 20px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+      z-index: 100;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      padding: 24px 20px;
+      text-align: center;
+      background: #f0f0ea;
+    }
+    footer p { font-size: 12px; color: var(--muted); line-height: 1.8; }
+
+    /* ── Wireframe overlay label ─────────────────────── */
+    .wf-label {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+      background: #f0f0ea;
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+
+    /* sidebar annotation panel for desktop view */
+    @media (min-width: 800px) {
+      body { display: flex; gap: 0; }
+      .page { flex-shrink: 0; margin: 0; }
+      .side-notes {
+        flex: 1;
+        padding: 20px 24px;
+        background: #fffbf0;
+        border-left: 2px solid var(--anno);
+        min-height: 100vh;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .side-notes h2 { font-size: 15px; margin: 20px 0 8px; color: #5c3d00; }
+      .side-notes h2:first-child { margin-top: 0; }
+      .side-notes p, .side-notes li { color: #5c3d00; }
+      .side-notes ul { padding-left: 16px; }
+      .side-notes .divider { border: none; border-top: 1px solid #e8d5a0; margin: 20px 0; }
+    }
+    @media (max-width: 799px) {
+      .side-notes { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     MOBILE WIREFRAME (390px — iPhone 14 base)
+     ═══════════════════════════════════════════ -->
+<div class="page">
+
+  <!-- ── S0: Nav ───────────────────────────────────── -->
+  <nav>
+    <div class="ph logo-ph">Gryd</div>
+    <span class="nav-badge">Bengaluru pilot</span>
+  </nav>
+  <div style="padding:8px 20px 0;">
+    <div class="anno">
+      <strong>PM Note — Nav</strong>
+      Zero navigation links. This is a capture page, not a website. The only exit is the CTA. The "Bengaluru pilot" badge signals exclusivity + geographic relevance immediately.
+    </div>
+  </div>
+
+  <!-- ── S1: Hero ──────────────────────────────────── -->
+  <section class="hero">
+    <div class="wf-label">S1 — Hero / Above the fold</div>
+
+    <p class="label">For rooftop solar owners</p>
+
+    <h1>You installed solar to save money.<br>Your DISCOM isn't letting you.</h1>
+
+    <div class="anno">
+      <strong>PM Note — Headline</strong>
+      Loss framing, not feature framing. "You installed solar" = identifies the reader immediately. "Your DISCOM isn't letting you" = external villain, not user's fault. Tested in the strategy doc: loss framing outperforms gain framing for this audience.
+    </div>
+
+    <!-- Rupee contrast visual -->
+    <div class="rupee-contrast">
+      <div class="rupee-box loss">
+        <div class="amount">₹2.50</div>
+        <div class="context">what DISCOM pays you<br>per unit exported</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="rupee-box gain">
+        <div class="amount">₹6.80</div>
+        <div class="context">P2P market rate<br>per unit</div>
+      </div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Rupee contrast</strong>
+      This is the entire value prop in 2 numbers. Needs to load before any copy is read. ₹2.50 and ₹6.80 are verified Karnataka figures (KERC + APPC 2024). Update per state if geo-targeting later.
+    </div>
+
+    <!-- Calculator -->
+    <div class="calc-box">
+      <div class="calc-label">How much are you leaving behind?</div>
+      <p class="small" style="margin-bottom:10px;">Drag to your system size →</p>
+
+      <!-- Slider mockup -->
+      <div class="slider-track"><div class="slider-thumb"></div></div>
+      <div class="slider-labels"><span>1 kW</span><span>3 kW ◀ you</span><span>10 kW</span></div>
+
+      <!-- Result -->
+      <div class="calc-result">
+        <div class="loss-amount">₹46,440 / year</div>
+        <div class="loss-label">you're leaving on the table — every year</div>
+      </div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Calculator</strong>
+      Formula: system_kW × 120 avg export hrs/mo × ₹4.30 gap × 12 = annual loss. Annual is more visceral than monthly — ₹46,440/yr reads like a missed vacation or school fees, not a rounding error. 120h is conservative (Bengaluru avg ~150h but we under-promise). Default = 3 kW. Output is always red — we are selling pain at this stage, not hope.
+    </div>
+
+    <!-- Primary CTA — minimal above fold -->
+    <button class="btn-primary">Get early access →</button>
+    <p class="trust-note">WhatsApp number only. No spam. Bengaluru-first.</p>
+
+    <div class="anno">
+      <strong>PM Note — Above-fold CTA</strong>
+      Minimal friction: clicking this scrolls to or reveals a 2-field form (Name + WhatsApp). NOT the full form. We qualify later. WhatsApp is the right channel — it's where this demographic already communicates. Lower friction than email for India.
+    </div>
+  </section>
+
+  <!-- ── S2: The Problem ───────────────────────────── -->
+  <section>
+    <div class="wf-label">S2 — The Problem (visible loss)</div>
+    <h2>Where your solar money actually goes</h2>
+    <p style="margin: 10px 0 16px; font-size:14px;">Today, your only option is to sell surplus to DISCOM. There's no market. No choice. Just one buyer — who pays as little as they can.</p>
+
+    <!-- Flow: today -->
+    <p class="label" style="margin-top:14px;">Today</p>
+    <div class="flow-row">
+      <div class="flow-node neutral">Your panels<span class="flow-label">generate power</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node neutral">Grid<span class="flow-label">absorbs surplus</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node bad">₹2.50<span class="flow-label">DISCOM pays you</span></div>
+    </div>
+
+    <!-- Flow: with platform -->
+    <p class="label" style="margin-top:14px;">With Gryd</p>
+    <div class="flow-row">
+      <div class="flow-node neutral">Your panels<span class="flow-label">generate power</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node good">P2P market<span class="flow-label">matched buyer nearby</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node good">₹6.80<span class="flow-label">you earn</span></div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Flow diagrams</strong>
+      Two flows side by side (vertical on mobile). Today = muted → muted → red (bad outcome). With us = muted → green → green (good outcome). Visual contrast does the work. No need to explain blockchain, IES, or smart meters here. That's a trust-killer at this stage.
+    </div>
+
+    <div style="margin-top:16px; padding:14px; background:#fdf0ee; border-radius:8px; border: 1px solid #e8bdb8;">
+      <p style="font-size:13px; color:#8b2222; font-weight:600;">India has 1 crore+ rooftop solar installations. Almost all of them are earning at the DISCOM floor.</p>
+    </div>
+  </section>
+
+  <!-- ── S3: How it works ──────────────────────────── -->
+  <section>
+    <div class="wf-label">S3 — How it works (3 steps)</div>
+    <h2>How it works</h2>
+    <p style="font-size:13px; color:#666; margin:8px 0 18px;">We connect to your existing inverter. You don't need new hardware.</p>
+
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Connect your inverter</h3>
+        <p>Works with Growatt, Solis, Huawei, Enphase. Read-only. We never control your system.</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>See your real earnings potential</h3>
+        <p>Live production data. Daily surplus. Exactly what you're losing per day.</p>
+      </div>
+    </div>
+
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Trade at market rate <span class="badge-soon">coming soon</span></h3>
+        <p>Set your price or auto-trade. IES-compliant settlement. Money to UPI.</p>
+      </div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Step 3 badge</strong>
+      "Coming soon" is honest. P2P trading requires DISCOM empanelment + IES integration. The Phase 1 product is visibility only. If we oversell trading and can't deliver in 60 days, trust collapses. The waitlist IS for trading — but the immediate value is visibility. This badge manages the expectation without killing the CTA.
+    </div>
+  </section>
+
+  <!-- ── S4: Why now / Regulatory ─────────────────── -->
+  <section>
+    <div class="wf-label">S4 — Why now (regulatory legitimacy)</div>
+    <h2>This is legal. The framework is live.</h2>
+    <p style="font-size:13px; color:#666; margin:8px 0 16px;">P2P energy trading is now regulated in Karnataka, Delhi, and UP. The infrastructure is being built.</p>
+
+    <div class="reg-card">
+      <div class="reg-tag">Karnataka</div>
+      <div class="reg-title">KERC P2P Regulations 2024</div>
+      <div class="reg-body">Effective August 6, 2024. Covers domestic consumers and solar prosumers. DISCOMs must empanel service providers.</div>
+    </div>
+
+    <div class="reg-card">
+      <div class="reg-tag">National</div>
+      <div class="reg-title">India Energy Stack (IES)</div>
+      <div class="reg-body">DPI for the power sector — like UPI but for energy. Launched June 2025. Led by Nandan Nilekani. Open settlement rails for P2P transactions.</div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Regulatory section</strong>
+      The #1 objection from a prosumer will be "is this even legal?" We answer it before they ask. KERC cite is the most specific signal — it has a date and a jurisdiction. IES / Nandan Nilekani lends credibility to the national infrastructure story. Don't mention blockchain on the landing page — it reads as speculative to a non-technical audience.
+    </div>
+  </section>
+
+  <!-- ── S5: Society / RWA section ─────────────────── -->
+  <section>
+    <div class="wf-label">S5 — RWA / Society (secondary audience)</div>
+
+    <div class="society-card">
+      <p class="label" style="color:#2c5282;">For housing societies & apartments</p>
+      <h3 style="color:#1a365d; margin-bottom:8px;">Managing a building with solar? The numbers get even better.</h3>
+      <p style="font-size:13px; color:#2d4a6e; margin-bottom:14px;">Pool surplus across units. Unlock common-area generation. A single building can trade as a mini-grid.</p>
+      <button class="btn-secondary" style="border-color:#3182ce; color:#3182ce;">Talk to us about your society →</button>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — RWA section</strong>
+      This is a separate conversion path. RWA contacts get a different follow-up (higher-touch, B2B conversation). The blue color differentiates it visually from the individual prosumer journey. CTA routes to a separate form or WhatsApp line — NOT the same waitlist. Why? RWA conversations need 30-min calls, not an automated drip. Don't mix the two funnels.
+    </div>
+  </section>
+
+  <!-- ── S6: Full waitlist form ─────────────────────── -->
+  <section>
+    <div class="wf-label">S6 — Full waitlist form (bottom of page)</div>
+    <h2>Get early access</h2>
+    <p style="font-size:13px; color:#666; margin:8px 0 18px;">We're starting in Bengaluru. Tell us about your setup so we can prioritise you.</p>
+
+    <div class="form-field">
+      <label>Your name</label>
+      <div class="input-ph">Raghav Sharma</div>
+    </div>
+
+    <div class="form-field">
+      <label>WhatsApp number</label>
+      <div class="input-ph">+91 98765 43210</div>
+    </div>
+
+    <div class="form-field">
+      <label>City</label>
+      <div class="select-ph"><span>Bengaluru</span><span>▾</span></div>
+    </div>
+
+    <div class="form-field">
+      <label>Inverter brand</label>
+      <div class="select-ph"><span>Growatt</span><span>▾</span></div>
+    </div>
+
+    <div class="form-field">
+      <label>System size (approx kW)</label>
+      <div class="select-ph"><span>3 kW</span><span>▾</span></div>
+    </div>
+
+    <div class="anno">
+      <strong>PM Note — Form fields</strong>
+      5 fields max. Each one earns its place: Name (personalization), WhatsApp (primary channel), City (geo-prioritisation), Inverter (API compatibility check — tells us if we can serve them in Phase 1), System size (calculates their loss and prioritises high-value leads). No email field — it reduces completion rate and WhatsApp is the primary channel for this audience.
+    </div>
+
+    <button class="btn-primary">Join the waitlist →</button>
+    <p class="trust-note">No spam. No cold calls. We'll message you on WhatsApp when we're ready for Bengaluru.</p>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────── -->
+  <footer>
+    <p>
+      Gryd · Bengaluru, India<br>
+      Built on India Energy Stack · KERC-compliant<br><br>
+      <span style="font-size:11px;">We do not store your inverter credentials. Read-only access only.<br>
+      Questions? WhatsApp us: +91 XXXXX XXXXX</span>
+    </p>
+  </footer>
+
+  <!-- ── Sticky bottom CTA (mobile) ────────────────── -->
+  <div class="sticky-cta">
+    <button class="btn-primary" style="margin:0;">Get early access — it's free →</button>
+    <p class="trust-note">Bengaluru pilot · KERC-compliant · No spam</p>
+  </div>
+
+  <div style="padding: 8px 20px; background: #fff8e1; border-top: 2px solid var(--anno);">
+    <div class="anno" style="margin:0;">
+      <strong>PM Note — Sticky CTA</strong>
+      Persists throughout scroll. On mobile, the user should never be more than one tap from the form. Copy is "it's free" — removes the cost objection immediately since we haven't mentioned pricing anywhere on this page. We are not selling a product here. We are capturing demand signal.
+    </div>
+  </div>
+
+</div><!-- end .page -->
+
+
+<!-- ═══════════════════════════════════════════
+     SIDE PANEL — PM DESIGN DECISIONS
+     (visible on desktop only)
+     ═══════════════════════════════════════════ -->
+<div class="side-notes">
+  <h2>Page goal</h2>
+  <p>Single outcome: WhatsApp number + city + inverter brand. Everything else is in service of that.</p>
+
+  <hr class="divider">
+
+  <h2>Sections</h2>
+  <ul>
+    <li><strong>S1 Hero</strong> — hook + calculator + above-fold CTA</li>
+    <li><strong>S2 Problem</strong> — make the loss visible with flows</li>
+    <li><strong>S3 How it works</strong> — 3 steps, honest about Phase 1 limits</li>
+    <li><strong>S4 Why now</strong> — kills the "is this legal?" objection</li>
+    <li><strong>S5 Society</strong> — separate path for RWA leads</li>
+    <li><strong>S6 Form</strong> — full qualification at bottom</li>
+  </ul>
+
+  <hr class="divider">
+
+  <h2>Key decisions</h2>
+  <ul>
+    <li><strong>Loss framing</strong> throughout — not "earn more" but "you're losing ₹3,870/mo"</li>
+    <li><strong>No pricing on page</strong> — we are capturing demand, not selling a product</li>
+    <li><strong>WhatsApp > email</strong> — primary contact channel for this demographic in India</li>
+    <li><strong>"Coming soon" on trading</strong> — don't oversell Phase 2 when Phase 1 is visibility</li>
+    <li><strong>No blockchain mention</strong> — trust-killer for non-technical audience</li>
+    <li><strong>Sticky CTA</strong> — user is never more than 1 tap from signup</li>
+    <li><strong>RWA = separate funnel</strong> — blue section, different CTA, different follow-up</li>
+  </ul>
+
+  <hr class="divider">
+
+  <h2>Calculator formula</h2>
+  <p><code>system_kW × 120 hrs/mo × ₹4.30 gap × 12 = annual loss</code></p>
+  <p>120h = conservative Bengaluru export avg. ₹4.30 = ₹6.80 − ₹2.50. Default = 3 kW → ₹46,440/yr.</p>
+
+  <hr class="divider">
+
+  <h2>What we're NOT testing here</h2>
+  <ul>
+    <li>Brand / name / logo (TBD separately)</li>
+    <li>B2B / DISCOM messaging</li>
+    <li>Pricing / subscription model</li>
+    <li>Technical architecture</li>
+  </ul>
+  <p>This page has one job. Keep it focused.</p>
+
+  <hr class="divider">
+
+  <h2>Success metrics</h2>
+  <ul>
+    <li>50+ signups in 14 days</li>
+    <li>30%+ from Bengaluru</li>
+    <li>Growatt dominant in inverter field (validates API Phase 1)</li>
+    <li>3+ unsolicited "when can I trade?" replies</li>
+  </ul>
+
+  <hr class="divider">
+
+  <h2>Open questions this page surfaces</h2>
+  <ul>
+    <li>What is the product name? (Currently "Gryd")</li>
+    <li>What are the ₹ figures for Delhi/Pune? (Currently Karnataka-specific)</li>
+    <li>Is "IES waitlist" the right framing or does it read as too far away?</li>
+    <li>Should the calculator show cumulative annual loss instead of monthly?</li>
+  </ul>
+</div>
+
+</body>
+</html>

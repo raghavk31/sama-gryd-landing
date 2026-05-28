@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sama — Grid Intelligence for Distributed India</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --paper:         #F9F6F1;
+      --ink:           #1C1917;
+      --ink-light:     #6B6560;
+      --surface-cool:  #EDF0F2;
+      --surface-dark:  #1C1917;
+      --terracotta:    #C44536;
+      --border:        rgba(28,25,23,.12);
+
+      /* Gradient palette — painterly atmospheric only */
+      --dawn:   #FFD4A3;
+      --coral:  #F0A07A;
+      --lav:    #C4B4D4;
+      --sky:    #A8C0D4;
+
+      /* Reading list card fills */
+      --card-coral: #E8C4B4;
+      --card-sage:  #C4D0BC;
+      --card-sand:  #DDD4B8;
+      --card-lav:   #C8C0D8;
+
+      --serif: 'Instrument Serif', serif;
+      --sans:  'DM Sans', sans-serif;
+      --max:   1160px;
+      --pad:   48px;
+    }
+    @media (max-width: 640px) { :root { --pad: 22px; } }
+
+    body {
+      font-family: var(--sans);
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+
+    /* ── Eyebrow ── */
+    .ey {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--ink-light);
+      margin-bottom: 20px;
+    }
+    .ey.c   { text-align: center; }
+    .ey.inv { color: rgba(249,246,241,.35); }
+
+    /* ── Painted background ── */
+    .painted {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 115% 92% at -7% -18%, rgba(255,212,163,.92) 0%, transparent 56%),
+        radial-gradient(ellipse  80% 68% at  5%  54%, rgba(240,160,122,.52) 0%, transparent 50%),
+        radial-gradient(ellipse  68% 74% at 17% 108%, rgba(196,180,212,.48) 0%, transparent 52%),
+        radial-gradient(ellipse  50% 56% at 44%  -8%, rgba(168,192,212,.30) 0%, transparent 50%),
+        radial-gradient(ellipse  36% 40% at 72%  70%, rgba(196,180,212,.15) 0%, transparent 46%),
+        var(--paper);
+      z-index: 0;
+    }
+    /* Grain texture — SVG feTurbulence noise, self-contained */
+    .grain {
+      position: absolute; inset: 0; z-index: 1; opacity: .04;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+
+    /* ── Scroll reveal ── */
+    .r {
+      opacity: 0; transform: translateY(16px);
+      transition: opacity .72s cubic-bezier(.16,1,.3,1), transform .72s cubic-bezier(.16,1,.3,1);
+    }
+    .r.in { opacity: 1; transform: none; }
+
+    /* ── Buttons ── */
+    .btn-ink {
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      color: var(--paper); background: var(--ink);
+      padding: 13px 28px; border-radius: 100px;
+      text-decoration: none; border: 1.5px solid var(--ink);
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: opacity .2s, transform .18s;
+    }
+    .btn-ink:hover { opacity: .82; transform: translateY(-1px); }
+
+    .btn-ghost {
+      font-family: var(--sans); font-size: 14px; font-weight: 400;
+      color: var(--ink-light); background: transparent;
+      padding: 13px 22px; border-radius: 100px;
+      text-decoration: none; border: 1px solid var(--border);
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: color .18s, border-color .18s, transform .18s;
+    }
+    .btn-ghost:hover { color: var(--ink); border-color: rgba(28,25,23,.28); transform: translateY(-1px); }
+
+    /* ══════════════════════════════════════
+       NAV
+    ══════════════════════════════════════ */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      transition: background .36s, border-color .36s;
+      border-bottom: 1px solid transparent;
+    }
+    #nav.stuck {
+      background: rgba(249,246,241,.93);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-color: var(--border);
+    }
+    .nav-in {
+      max-width: var(--max); margin: 0 auto;
+      padding: 0 var(--pad); height: 62px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-family: var(--serif); font-size: 20px; font-weight: 400;
+      letter-spacing: -.01em; color: var(--ink); text-decoration: none;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-devanagari {
+      font-size: 13px; color: var(--ink-light); font-family: var(--sans);
+      font-weight: 400; letter-spacing: 0; margin-top: 1px;
+    }
+    .nav-links { display: flex; gap: 2px; list-style: none; }
+    .nav-links a {
+      font-size: 13.5px; font-weight: 400; color: var(--ink-light);
+      text-decoration: none; padding: 6px 13px; border-radius: 100px;
+      transition: color .14s, background .14s;
+    }
+    .nav-links a:hover { color: var(--ink); background: rgba(28,25,23,.05); }
+    .nav-cta {
+      font-size: 13px; font-weight: 500; color: var(--ink);
+      background: transparent; border: 1px solid var(--border);
+      padding: 8px 20px; border-radius: 100px; text-decoration: none;
+      transition: all .18s;
+    }
+    .nav-cta:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    @media (max-width: 720px) { .nav-links { display: none; } }
+
+    /* ══════════════════════════════════════
+       HERO
+    ══════════════════════════════════════ */
+    #hero {
+      position: relative; min-height: 100svh;
+      display: flex; flex-direction: column;
+    }
+    .hero-body {
+      flex: 1; position: relative; z-index: 2;
+      display: flex; align-items: center;
+    }
+    .hero-content {
+      max-width: var(--max); width: 100%;
+      margin: 0 auto; padding: 0 var(--pad);
+      padding-top: 98px; padding-bottom: 72px;
+    }
+
+    /* Type scale — hero headline: 80px / 1.05 / Instrument Serif / 400 */
+    .hero-ey {
+      font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--ink-light);
+      margin-bottom: 32px;
+      opacity: 0; animation: fu .5s .08s forwards;
+    }
+    .hero-h1 {
+      font-family: var(--serif);
+      font-size: clamp(42px, 6.8vw, 80px);
+      font-weight: 400; letter-spacing: -.018em; line-height: 1.05;
+      color: var(--ink); max-width: 800px; margin-bottom: 28px;
+      opacity: 0; animation: fu .85s .2s forwards;
+    }
+    /* Terracotta uses 1 & 2: italic accent on key words */
+    .hero-h1 em { font-style: italic; color: var(--terracotta); }
+
+    /* Sub-headline: 26px / 1.3 / DM Sans / 500 — brief spec */
+    .hero-sub {
+      font-size: clamp(17px, 1.8vw, 20px); font-weight: 400;
+      color: var(--ink-light); max-width: 480px; line-height: 1.62;
+      margin-bottom: 36px;
+      opacity: 0; animation: fu .65s .4s forwards;
+    }
+    .hero-btns {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      opacity: 0; animation: fu .55s .52s forwards;
+    }
+
+    /* Stats strip — open, editorial */
+    .hero-stats {
+      display: flex; flex-wrap: wrap;
+      margin-top: 56px; padding-top: 0;
+      border-top: 1px solid var(--border);
+      opacity: 0; animation: fu .55s .64s forwards;
+    }
+    .hstat {
+      padding: 20px 36px 20px 0; margin-right: 0;
+      border-right: 1px solid var(--border);
+      padding-right: 36px; margin-right: 36px;
+    }
+    .hstat:last-child { border-right: none; }
+    /* Number/stat: Instrument Serif italic, terracotta use 3 on key stat */
+    .hstat-v {
+      font-family: var(--serif); font-style: italic;
+      font-size: 30px; line-height: 1; letter-spacing: -.018em;
+      color: var(--ink); margin-bottom: 5px;
+    }
+    .hstat-v.hi { color: var(--terracotta); } /* terracotta use 3 */
+    .hstat-l { font-size: 12px; color: var(--ink-light); line-height: 1.45; }
+    @media (max-width: 640px) {
+      .hstat { min-width: 50%; border-right: none; padding-right: 0; margin-right: 0; }
+      .hstat:nth-child(odd) { border-right: 1px solid var(--border); padding-right: 16px; }
+    }
+
+    /* Hero floor */
+    .hero-floor { position: relative; z-index: 2; }
+    .hero-floor-in {
+      max-width: var(--max); margin: 0 auto;
+      padding: 0 var(--pad) 28px;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      opacity: 0; animation: fu .5s .78s forwards;
+    }
+    .hero-scroll { font-size: 11px; color: var(--ink-light); opacity: .5; letter-spacing: .06em; }
+    .hero-live   { font-size: 11px; color: var(--ink-light); display: flex; align-items: center; gap: 6px; }
+    .ldot {
+      width: 5px; height: 5px; border-radius: 50%; background: #22c55e;
+      display: inline-block; flex-shrink: 0;
+      animation: ld 2.5s ease-in-out infinite;
+    }
+    @keyframes ld { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.38;transform:scale(1.5)} }
+    @keyframes fu  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    /* ══════════════════════════════════════
+       SECTION 2 — THE SHIFT
+    ══════════════════════════════════════ */
+    #shift {
+      background: var(--paper);
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .shift-grid {
+      display: grid; grid-template-columns: 5fr 7fr;
+      gap: 88px; align-items: start;
+    }
+    @media (max-width: 880px) { .shift-grid { grid-template-columns: 1fr; gap: 44px; } }
+
+    /* Section opener: 52px / 1.1 / Instrument Serif / 400 */
+    .shift-h2 {
+      font-family: var(--serif);
+      font-size: clamp(26px, 3.3vw, 52px);
+      font-weight: 400; letter-spacing: -.018em; line-height: 1.1;
+      color: var(--ink); margin-bottom: 20px; margin-top: 12px;
+    }
+    .shift-h2 em { font-style: italic; } /* no terracotta — already used up */
+    .shift-p { font-size: 16px; color: var(--ink-light); line-height: 1.7; }
+
+    .shift-row {
+      display: grid; grid-template-columns: 96px 1fr;
+      gap: 28px; padding: 26px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .shift-row:first-child { border-top: 1px solid var(--border); }
+    .shift-lbl {
+      font-size: 11px; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--ink); padding-top: 2px;
+    }
+    .shift-text  { font-size: 15px; color: var(--ink-light); line-height: 1.68; margin-bottom: 5px; }
+    .shift-verdict { font-size: 13px; color: var(--ink-light); font-style: italic; }
+    .shift-verdict.bold { font-style: normal; font-weight: 600; color: var(--ink); font-size: 14px; }
+
+    /* ══════════════════════════════════════
+       SECTION 3 — THE ARCHITECTURE
+    ══════════════════════════════════════ */
+    #arch {
+      background: var(--surface-cool);
+      padding: 100px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .arch-header { margin-bottom: 64px; }
+    .arch-h2 {
+      font-family: var(--serif);
+      font-size: clamp(28px, 3.5vw, 52px);
+      font-weight: 400; letter-spacing: -.018em; line-height: 1.1;
+      color: var(--ink); margin-top: 12px; max-width: 560px;
+    }
+    .arch-h2 em { font-style: italic; }
+
+    .arch-blocks {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+    }
+    @media (max-width: 840px) { .arch-blocks { grid-template-columns: 1fr; } }
+
+    .arch-block {
+      padding: 48px 40px 52px; position: relative;
+      border-right: 1px solid var(--border);
+      background: var(--surface-cool); transition: background .24s;
+    }
+    .arch-block:last-child { border-right: none; }
+    .arch-block:hover { background: #E5E9EC; }
+    @media (max-width: 840px) {
+      .arch-block { border-right: none; border-bottom: 1px solid var(--border); }
+      .arch-block:last-child { border-bottom: none; }
+    }
+    .arch-n {
+      position: absolute; top: 22px; right: 24px;
+      font-size: 11px; color: var(--ink-light); opacity: .5; letter-spacing: .06em;
+    }
+    .arch-blob { width: 44px; height: 44px; margin-bottom: 24px; }
+
+    /* Sub-headline: 26px / 1.3 / DM Sans / 500 */
+    .arch-title {
+      font-family: var(--sans); font-size: 18px; font-weight: 600;
+      letter-spacing: -.01em; color: var(--ink); margin-bottom: 12px;
+    }
+    /* Body: 17px / 1.6 / DM Sans / 400 */
+    .arch-body { font-size: 15px; color: var(--ink-light); line-height: 1.68; }
+    .arch-stat {
+      display: inline-block; margin-top: 16px;
+      font-family: var(--serif); font-style: italic;
+      font-size: 14px; color: var(--ink-light); letter-spacing: -.01em;
+    }
+
+    /* ══════════════════════════════════════
+       SECTION 4 — WHY NOW
+    ══════════════════════════════════════ */
+    #why {
+      background: var(--paper);
+      padding: 100px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .why-head { text-align: center; margin-bottom: 60px; }
+    /* Section opener: italic Instrument Serif, full heading italic — the editorial move */
+    .why-h2 {
+      font-family: var(--serif);
+      font-size: clamp(28px, 3.8vw, 52px);
+      font-weight: 400; font-style: italic;
+      letter-spacing: -.016em; line-height: 1.15;
+      color: var(--ink); max-width: 680px; margin: 0 auto;
+    }
+
+    .cite-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;
+    }
+    @media (max-width: 1000px) { .cite-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:  520px) { .cite-grid { grid-template-columns: 1fr; } }
+
+    .cite-card {
+      background: #fff; border: 1px solid var(--border); border-radius: 16px;
+      padding: 26px 22px; display: flex; flex-direction: column; gap: 14px;
+      transition: transform .22s;
+    }
+    .cite-card:hover { transform: translateY(-4px); }
+    /* Caption/footnote: 13px / DM Sans / 400 */
+    .cite-tag {
+      font-size: 10px; font-weight: 600; letter-spacing: .15em;
+      text-transform: uppercase; color: var(--ink-light);
+    }
+    .cite-hl {
+      font-family: var(--serif); font-size: 16px; font-weight: 400;
+      letter-spacing: -.01em; line-height: 1.28; color: var(--ink); flex: 1;
+    }
+    .cite-body { font-size: 13px; color: var(--ink-light); line-height: 1.62; }
+    .cite-foot {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding-top: 13px; border-top: 1px solid var(--border);
+    }
+    .cite-foot svg { margin-top: 1px; flex-shrink: 0; }
+    .cite-ref { font-size: 10.5px; color: rgba(28,25,23,.3); line-height: 1.45; }
+
+    /* ══════════════════════════════════════
+       SECTION 5 — MANIFESTO / THESIS
+    ══════════════════════════════════════ */
+    #manifesto {
+      background: var(--surface-dark);
+      padding: 120px 0;
+    }
+    .mani-inner { max-width: 860px; margin: 0 auto; text-align: center; }
+    .mani-glyph {
+      font-family: var(--sans); font-size: 52px; font-weight: 300;
+      color: rgba(249,246,241,.08); line-height: 1; margin-bottom: 40px;
+      letter-spacing: .02em;
+    }
+    /* Section opener on dark: 52px / 1.1 / Instrument Serif */
+    .mani-stmt {
+      font-family: var(--serif);
+      font-size: clamp(26px, 4vw, 52px);
+      font-weight: 400; letter-spacing: -.02em; line-height: 1.18;
+      color: var(--paper); margin-bottom: 60px;
+    }
+    .mani-cols {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+      text-align: left;
+      border-top: 1px solid rgba(249,246,241,.1);
+      padding-top: 48px; margin-bottom: 48px;
+    }
+    @media (max-width: 620px) { .mani-cols { grid-template-columns: 1fr; gap: 28px; } }
+    .mani-cols p { font-size: 15px; color: rgba(249,246,241,.42); line-height: 1.74; }
+    .mani-sig {
+      font-family: var(--serif); font-style: italic; font-size: 14px;
+      color: rgba(249,246,241,.26); letter-spacing: .01em;
+    }
+
+    /* ══════════════════════════════════════
+       SECTION 6 — READING LIST
+    ══════════════════════════════════════ */
+    #reading {
+      background: var(--surface-cool);
+      padding: 100px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .read-head { margin-bottom: 52px; }
+    .read-h2 {
+      font-family: var(--serif);
+      font-size: clamp(22px, 2.8vw, 38px);
+      font-weight: 400; letter-spacing: -.016em; line-height: 1.28;
+      color: var(--ink); max-width: 500px; margin-top: 10px;
+    }
+
+    .read-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;
+    }
+    @media (max-width: 1000px) { .read-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:  520px) { .read-grid { grid-template-columns: 1fr; } }
+
+    .read-card {
+      border-radius: 18px; padding: 30px 26px 26px;
+      display: flex; flex-direction: column; min-height: 268px;
+      transition: transform .22s;
+    }
+    .read-card:hover { transform: translateY(-4px); }
+    .rc-coral { background: var(--card-coral); }
+    .rc-sage  { background: var(--card-sage);  }
+    .rc-sand  { background: var(--card-sand);  }
+    .rc-lav   { background: var(--card-lav);   }
+
+    .read-icon { width: 34px; height: 34px; margin-bottom: 22px; opacity: .55; }
+    .read-type {
+      font-size: 10px; font-weight: 600; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--ink-light); margin-bottom: 10px;
+    }
+    .read-title {
+      font-family: var(--serif); font-size: 15.5px; font-weight: 400;
+      letter-spacing: -.01em; line-height: 1.36; color: var(--ink); flex: 1;
+    }
+    .read-status { font-size: 11px; color: var(--ink-light); margin-top: 14px; opacity: .65; }
+
+    /* ══════════════════════════════════════
+       SECTION 7 — JOIN
+    ══════════════════════════════════════ */
+    #join {
+      position: relative; overflow: hidden;
+      padding: 120px var(--pad);
+      border-bottom: 1px solid var(--border);
+    }
+    .join-inner {
+      position: relative; z-index: 2;
+      max-width: 540px; margin: 0 auto; text-align: center;
+    }
+    /* Section opener as CTA headline */
+    .join-h2 {
+      font-family: var(--serif);
+      font-size: clamp(32px, 5vw, 64px);
+      font-weight: 400; letter-spacing: -.022em; line-height: 1.1;
+      color: var(--ink); margin-bottom: 18px; margin-top: 12px;
+    }
+    .join-sub { font-size: 16px; color: var(--ink-light); line-height: 1.65; margin-bottom: 38px; }
+
+    .join-form {
+      display: flex; gap: 8px; max-width: 440px; margin: 0 auto 16px;
+    }
+    @media (max-width: 500px) { .join-form { flex-direction: column; } }
+    .join-form input {
+      flex: 1; font-family: var(--sans); font-size: 15px; color: var(--ink);
+      background: rgba(255,255,255,.84); border: 1px solid var(--border);
+      border-radius: 100px; padding: 13px 22px; outline: none;
+      transition: border-color .15s;
+    }
+    .join-form input::placeholder { color: var(--ink-light); opacity: .65; }
+    .join-form input:focus { border-color: rgba(28,25,23,.28); }
+    /* Terracotta use 4: CTA button */
+    .join-form button {
+      font-family: var(--sans); font-size: 14px; font-weight: 600;
+      color: #fff; background: var(--terracotta);
+      border: none; padding: 13px 26px; border-radius: 100px;
+      cursor: pointer; white-space: nowrap;
+      transition: opacity .18s, transform .18s;
+    }
+    .join-form button:hover { opacity: .88; transform: translateY(-1px); }
+    .join-note { font-size: 13px; color: var(--ink-light); opacity: .72; }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer { background: var(--paper); padding: 56px 0 0; }
+    .foot-grid {
+      display: grid; grid-template-columns: 1.6fr 1fr 1fr;
+      gap: 48px; padding-bottom: 44px;
+      border-bottom: 1px solid var(--border);
+    }
+    @media (max-width: 700px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 32px; } }
+    @media (max-width: 440px) { .foot-grid { grid-template-columns: 1fr; } }
+
+    .foot-logo {
+      font-family: var(--serif); font-size: 20px; font-weight: 400;
+      letter-spacing: -.01em; color: var(--ink); text-decoration: none;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .foot-deva { font-size: 12px; color: var(--ink-light); font-family: var(--sans); font-weight: 400; }
+    .foot-mission { font-size: 13.5px; color: var(--ink-light); line-height: 1.65; max-width: 220px; margin-bottom: 22px; }
+    .foot-copy    { font-size: 11px; color: var(--ink-light); opacity: .55; }
+    .foot-col h5  {
+      font-size: 10px; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--ink-light); opacity: .65;
+      margin-bottom: 14px;
+    }
+    .foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .foot-col a  { font-size: 14px; color: var(--ink-light); text-decoration: none; transition: color .14s; }
+    .foot-col a:hover { color: var(--ink); }
+    .foot-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 20px 0;
+    }
+    @media (max-width: 540px) { .foot-bottom { flex-direction: column; gap: 8px; text-align: center; } }
+    .foot-tagline {
+      font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--ink-light);
+    }
+    .foot-reg { font-size: 11px; color: var(--ink-light); opacity: .5; letter-spacing: .03em; }
+
+    /* ── Mobile CTA ── */
+    .mcta {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(249,246,241,.94);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 12px 20px 18px; z-index: 90; transition: opacity .3s;
+    }
+    @media (max-width: 600px) { .mcta { display: block; } }
+    .mcta .btn-ink { width: 100%; justify-content: center; font-size: 14px; padding: 14px; }
+    .mcta-n { font-size: 10.5px; color: var(--ink-light); text-align: center; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════ NAV ══════ -->
+<nav id="nav">
+  <div class="nav-in">
+    <a href="#" class="nav-logo">
+      Sama
+      <span class="nav-devanagari">सम</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#arch">Product</a></li>
+      <li><a href="#reading">Research</a></li>
+      <li><a href="#manifesto">Thesis</a></li>
+    </ul>
+    <a href="#join" class="nav-cta">Join Waitlist</a>
+  </div>
+</nav>
+
+<!-- ══════ HERO ══════ -->
+<section id="hero">
+  <div class="painted" aria-hidden="true"></div>
+  <div class="grain"   aria-hidden="true"></div>
+
+  <div class="hero-body">
+    <div class="hero-content">
+
+      <div class="hero-ey">Sama · Grid Intelligence · India</div>
+
+      <!-- Hero headline: 80px / 1.05 / Instrument Serif / 400 -->
+      <!-- Italic accent on two key words, both in terracotta (uses 1 & 2 of 4) -->
+      <h1 class="hero-h1">
+        India's grid was built<br>
+        for one direction.<br>
+        It is becoming <em>distributed.</em><br>
+        Sama is the intelligence it <em>needs.</em>
+      </h1>
+
+      <p class="hero-sub">
+        Sama reads every rooftop, matches every surplus, and builds the intelligence layer for India's distributed grid.
+      </p>
+
+      <div class="hero-btns">
+        <a href="#join"      class="btn-ink">Join the Waitlist</a>
+        <a href="#manifesto" class="btn-ghost">Read the Thesis</a>
+      </div>
+
+      <!-- Stats strip — Instrument Serif italic, terracotta on key stat -->
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-v">2.4 GW</div>
+          <div class="hstat-l">distributed generation<br>online today</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v">₹2.50</div>
+          <div class="hstat-l">DISCOM pays you<br>per unit of surplus</div>
+        </div>
+        <div class="hstat">
+          <!-- Terracotta use 3: the key number, the upside -->
+          <div class="hstat-v hi">₹6.80</div>
+          <div class="hstat-l">P2P market rate<br>per unit</div>
+        </div>
+        <div class="hstat">
+          <div class="hstat-v">3 states</div>
+          <div class="hstat-l">with active P2P<br>regulations today</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="hero-floor">
+    <div class="hero-floor-in">
+      <span class="hero-scroll">(Scroll)</span>
+      <span class="hero-live">
+        <span class="ldot"></span>
+        <span id="ts">India · 11:58 AM · 2.4 GW distributed generation active</span>
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ THE SHIFT ══════ -->
+<section id="shift">
+  <div class="wrap">
+    <div class="shift-grid">
+
+      <div class="r">
+        <div class="ey">The Problem</div>
+        <!-- Section opener: 52px / 1.1 / Instrument Serif / 400 -->
+        <h2 class="shift-h2">India built a grid for an era that is <em>ending.</em></h2>
+        <p class="shift-p">300 GW of centralised coal and hydro. One direction. Predictable. Controllable. Then seventy million rooftops changed the equation, and the grid has no intelligence to manage what follows.</p>
+      </div>
+
+      <div class="r" style="transition-delay:.12s">
+        <div class="shift-row">
+          <div class="shift-lbl">Generation</div>
+          <div>
+            <p class="shift-text">India added 150 GW of rooftop and distributed solar in five years. Surplus exports at a floor price set by the DISCOM, with no market mechanism and no consumer choice.</p>
+            <div class="shift-verdict">One direction. One price. No negotiation.</div>
+          </div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-lbl">Data</div>
+          <div>
+            <p class="shift-text">Smart meter readings are collected but siloed inside DISCOM billing systems. Inverter data lives in third-party apps. No prosumer has a unified view of their own generation asset.</p>
+            <div class="shift-verdict">The data exists. The intelligence does not.</div>
+          </div>
+        </div>
+        <div class="shift-row">
+          <div class="shift-lbl">Markets</div>
+          <div>
+            <p class="shift-text">KERC P2P regulations are live. Smart meters are deploying. Beckn Protocol handles settlement. The only thing missing is a coordination layer between prosumers.</p>
+            <div class="shift-verdict bold">That layer is what Sama builds.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════ THE ARCHITECTURE ══════ -->
+<section id="arch">
+  <div class="wrap">
+    <div class="arch-header r">
+      <div class="ey">What we are building</div>
+      <!-- italic accent on "One platform" — section's emotional weight -->
+      <h2 class="arch-h2">Three layers. <em>One platform.</em></h2>
+    </div>
+
+    <div class="arch-blocks">
+
+      <div class="arch-block r">
+        <div class="arch-n">01</div>
+        <!-- Organic blob shape — dark neutral -->
+        <svg class="arch-blob" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <path d="M22 4C32 4 40 11 40 22C40 33 33 40 22 40C10 40 4 32 4 24C4 12 12 4 22 4Z" fill="rgba(28,25,23,.07)"/>
+          <path d="M22 13C27 13 31 16 31 22C31 28 27 31 22 31C16 31 12 27 13 22C14 16 18 13 22 13Z" fill="rgba(28,25,23,.09)"/>
+        </svg>
+        <div class="arch-title">Read</div>
+        <p class="arch-body">Connect every prosumer inverter. Read production, consumption, and surplus in real time. The first unified view of distributed generation in India — consumer-visible and consumer-owned.</p>
+        <span class="arch-stat">Growatt · Solis · Huawei · Enphase</span>
+      </div>
+
+      <div class="arch-block r" style="transition-delay:.1s">
+        <div class="arch-n">02</div>
+        <svg class="arch-blob" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <path d="M22 6C34 4 42 12 42 22C42 34 33 42 22 42C10 42 2 33 4 22C6 11 12 8 22 6Z" fill="rgba(28,25,23,.07)"/>
+          <path d="M22 14C28 14 32 18 32 24C32 30 27 33 22 33C16 33 11 29 13 24C15 18 17 14 22 14Z" fill="rgba(28,25,23,.09)"/>
+        </svg>
+        <div class="arch-title">Match</div>
+        <p class="arch-body">A P2P energy marketplace. Prosumers sell surplus to verified buyers at market rate — ₹6.80, not the DISCOM floor of ₹2.50. Settled via Beckn Protocol and UPI. The first consumer energy market in India.</p>
+        <span class="arch-stat">₹2.50 → ₹6.80 per unit</span>
+      </div>
+
+      <div class="arch-block r" style="transition-delay:.2s">
+        <div class="arch-n">03</div>
+        <svg class="arch-blob" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <path d="M24 4C36 6 42 15 42 24C42 36 33 42 24 42C11 42 2 34 4 24C6 12 14 2 24 4Z" fill="rgba(28,25,23,.07)"/>
+          <path d="M22 12C28 12 33 16 33 22C33 29 28 33 22 33C15 33 11 28 12 22C13 15 16 12 22 12Z" fill="rgba(28,25,23,.09)"/>
+        </svg>
+        <div class="arch-title">Aggregate</div>
+        <p class="arch-body">Pool prosumers into virtual power plants. Dispatch at grid scale. The consumer wedge becomes utility infrastructure — and Sama becomes the coordination layer between distributed generation and the grid operator.</p>
+        <span class="arch-stat">Consumer wedge → grid infrastructure</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════ WHY NOW ══════ -->
+<section id="why">
+  <div class="wrap">
+    <div class="why-head r">
+      <div class="ey c">Why Now</div>
+      <!-- Full-heading italic: editorial section marker -->
+      <p class="why-h2">India's energy stack is being rewired in public.</p>
+    </div>
+
+    <div class="cite-grid">
+      <div class="cite-card r">
+        <div class="cite-tag">Regulation</div>
+        <div class="cite-hl">KERC P2P regulations live since August 2024</div>
+        <div class="cite-body">Karnataka domestic prosumers can sell directly to neighbours. DISCOMs must empanel approved service providers. The legal basis for Sama in Bengaluru.</div>
+        <div class="cite-foot">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+            <rect x=".5" y=".5" width="11" height="13" rx="1.5" stroke="rgba(28,25,23,.22)"/>
+            <line x1="3" y1="4.5" x2="9" y2="4.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="7"   x2="9" y2="7"   stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="9.5" x2="7" y2="9.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+          </svg>
+          <span class="cite-ref">KERC Implementation Regulations, 2024</span>
+        </div>
+      </div>
+
+      <div class="cite-card r" style="transition-delay:.1s">
+        <div class="cite-tag">Infrastructure</div>
+        <div class="cite-hl">India Energy Stack launched June 2025</div>
+        <div class="cite-body">UPI-style open protocol for energy, led by Nandan Nilekani. Beckn handles matching, UPI handles settlement. The coordination layer now exists.</div>
+        <div class="cite-foot">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+            <rect x=".5" y=".5" width="11" height="13" rx="1.5" stroke="rgba(28,25,23,.22)"/>
+            <line x1="3" y1="4.5" x2="9" y2="4.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="7"   x2="9" y2="7"   stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="9.5" x2="7" y2="9.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+          </svg>
+          <span class="cite-ref">Ministry of Power, June 2025</span>
+        </div>
+      </div>
+
+      <div class="cite-card r" style="transition-delay:.2s">
+        <div class="cite-tag">Hardware</div>
+        <div class="cite-hl">250 million smart meters deploying under RDSS</div>
+        <div class="cite-body">₹3 lakh crore programme creating the physical data layer for P2P settlement. Already active in Karnataka, Delhi, and UP — the same states with P2P regulations.</div>
+        <div class="cite-foot">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+            <rect x=".5" y=".5" width="11" height="13" rx="1.5" stroke="rgba(28,25,23,.22)"/>
+            <line x1="3" y1="4.5" x2="9" y2="4.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="7"   x2="9" y2="7"   stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="9.5" x2="7" y2="9.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+          </svg>
+          <span class="cite-ref">RDSS Scheme, MoP</span>
+        </div>
+      </div>
+
+      <div class="cite-card r" style="transition-delay:.3s">
+        <div class="cite-tag">Market</div>
+        <div class="cite-hl">PM Surya Ghar: 10 lakh homes solarised in 18 months</div>
+        <div class="cite-body">47.3 lakh applications, ₹4,770 crore subsidies disbursed. The prosumer base now exists at scale, and 70% of all new capacity is distributed.</div>
+        <div class="cite-foot">
+          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
+            <rect x=".5" y=".5" width="11" height="13" rx="1.5" stroke="rgba(28,25,23,.22)"/>
+            <line x1="3" y1="4.5" x2="9" y2="4.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="7"   x2="9" y2="7"   stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+            <line x1="3" y1="9.5" x2="7" y2="9.5" stroke="rgba(28,25,23,.22)" stroke-width="1.1"/>
+          </svg>
+          <span class="cite-ref">MNRE, March 2026</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ MANIFESTO ══════ -->
+<section id="manifesto">
+  <div class="wrap">
+    <div class="mani-inner">
+      <!-- Large muted Sanskrit glyph as atmospheric element -->
+      <div class="mani-glyph r">सम</div>
+      <div class="ey c inv r">The Thesis</div>
+      <h2 class="mani-stmt r">The next utility company in India will not look like a utility company.</h2>
+      <div class="mani-cols r">
+        <p>Energy is the last consumer vertical in India that hasn't had its DPI moment. The regulation is there. The infrastructure is being built. What's missing is a consumer-facing intelligence layer that makes the invisible visible: your rooftop as an asset, your surplus as a position, your building as a node in a distributed grid.</p>
+        <p>Sama begins with the simplest wedge: show prosumers what they're losing. Build trust through transparency. Then, when the trades begin, become the marketplace — and above it, the aggregation and dispatch layer that turns ten million rooftops into a coordinated virtual power plant. The consumer app is the wedge. The data is the moat. The VPP is the business.</p>
+      </div>
+      <div class="mani-sig r">— The Sama Team, Bengaluru, 2026</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ READING LIST ══════ -->
+<section id="reading">
+  <div class="wrap">
+    <div class="read-head r">
+      <div class="ey">The Reading List</div>
+      <h2 class="read-h2">We are building in public. Here is what we are reading and writing.</h2>
+    </div>
+
+    <div class="read-grid">
+      <div class="read-card rc-coral r">
+        <svg class="read-icon" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <path d="M3 17Q5.5 10 8 17Q10.5 24 13 17Q15.5 10 18 17Q20.5 24 23 17Q25.5 10 28 17Q30.5 24 33 17" stroke="#7A3020" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="read-type">Whitepaper</div>
+        <div class="read-title">Why distributed grid intelligence needs uncertainty-aware ML in monsoon India</div>
+        <div class="read-status">Coming soon</div>
+      </div>
+
+      <div class="read-card rc-sage r" style="transition-delay:.1s">
+        <svg class="read-icon" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <circle cx="6"  cy="17" r="2.4" stroke="#2A5028" stroke-width="1.5"/>
+          <circle cx="17" cy="7"  r="2.4" stroke="#2A5028" stroke-width="1.5"/>
+          <circle cx="28" cy="17" r="2.4" stroke="#2A5028" stroke-width="1.5"/>
+          <circle cx="17" cy="27" r="2.4" stroke="#2A5028" stroke-width="1.5"/>
+          <line x1="8.4"  y1="15.6" x2="14.6" y2="9.4"  stroke="#2A5028" stroke-width="1.2"/>
+          <line x1="19.4" y1="9.4"  x2="25.6" y2="14.6" stroke="#2A5028" stroke-width="1.2"/>
+          <line x1="25.6" y1="19.4" x2="19.4" y2="24.6" stroke="#2A5028" stroke-width="1.2"/>
+          <line x1="8.4"  y1="18.4" x2="14.6" y2="24.6" stroke="#2A5028" stroke-width="1.2"/>
+        </svg>
+        <div class="read-type">Essay</div>
+        <div class="read-title">VPP economics in India: from prosumer wedge to grid infrastructure</div>
+        <div class="read-status">Coming soon</div>
+      </div>
+
+      <div class="read-card rc-sand r" style="transition-delay:.2s">
+        <svg class="read-icon" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <path d="M6 6H24Q28 6 28 10V18Q28 22 24 22H18L12 28V22H10Q6 22 6 18V10Q6 6 6 6Z" stroke="#6A4A18" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+        </svg>
+        <div class="read-type">Interview</div>
+        <div class="read-title">A Bengaluru apartment, a BESCOM connection, and ₹40,000 left on the table</div>
+        <div class="read-status">Coming soon</div>
+      </div>
+
+      <div class="read-card rc-lav r" style="transition-delay:.3s">
+        <svg class="read-icon" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <rect x="6"  y="10" width="16" height="18" rx="2" stroke="#443068" stroke-width="1.6"/>
+          <rect x="9"  y="7"  width="16" height="18" rx="2" stroke="#443068" stroke-width="1.2" stroke-dasharray="2 2"/>
+          <line x1="10" y1="16" x2="18" y2="16" stroke="#443068" stroke-width="1.2"/>
+          <line x1="10" y1="20" x2="18" y2="20" stroke="#443068" stroke-width="1.2"/>
+          <line x1="10" y1="24" x2="15" y2="24" stroke="#443068" stroke-width="1.2"/>
+        </svg>
+        <div class="read-type">Research</div>
+        <div class="read-title">Reading list: 14 papers that shaped Sama's architecture</div>
+        <div class="read-status">Coming soon</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ JOIN ══════ -->
+<section id="join">
+  <div class="painted" aria-hidden="true"></div>
+  <div class="grain"   aria-hidden="true"></div>
+
+  <div class="join-inner">
+    <div class="ey c r">Early Access</div>
+    <h2 class="join-h2 r">Join the intelligence layer.</h2>
+    <p class="join-sub r">Prosumers, investors, and co-founders — we are building this in Bengaluru and we want to hear from you.</p>
+    <form class="join-form r" id="jf" onsubmit="handleSub(event)">
+      <input type="email" placeholder="your@email.com" required>
+      <!-- Terracotta use 4: CTA button -->
+      <button type="submit" id="subBtn">Join Waitlist</button>
+    </form>
+    <p class="join-note r">Used by early prosumers in Indiranagar, HSR, and Whitefield.</p>
+  </div>
+</section>
+
+<!-- ══════ FOOTER ══════ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a href="#" class="foot-logo">
+          Sama
+          <span class="foot-deva">सम</span>
+        </a>
+        <p class="foot-mission">Grid intelligence for India's distributed energy transition. Starting with the rooftop.</p>
+        <p class="foot-copy">© 2026 Sama Energy Intelligence Pvt. Ltd.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#arch">How it works</a></li>
+          <li><a href="#why">Why now</a></li>
+          <li><a href="#reading">Research</a></li>
+          <li><a href="#join">Early access</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Connect</h5>
+        <ul>
+          <li><a href="mailto:hello@sama.energy">hello@sama.energy</a></li>
+          <li><a href="#">Twitter / X</a></li>
+          <li><a href="#">LinkedIn</a></li>
+          <li><a href="#">Privacy notice</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span class="foot-tagline">Grid intelligence for distributed India.</span>
+      <span class="foot-reg">KERC P2P Regulations 2024 · India Energy Stack · Bengaluru</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Mobile sticky CTA -->
+<div class="mcta" id="mcta">
+  <a href="#join" class="btn-ink">Join the Sama Waitlist →</a>
+  <p class="mcta-n">Bengaluru first · Prosumers, VCs &amp; co-founders welcome</p>
+</div>
+
+<script>
+  // Nav glass effect on scroll
+  window.addEventListener('scroll', () =>
+    document.getElementById('nav').classList.toggle('stuck', scrollY > 20),
+    { passive: true }
+  );
+
+  // Live grid timestamp — updates every 60s with real IST time
+  function updateTs() {
+    const t = new Date().toLocaleTimeString('en-IN', {
+      hour: '2-digit', minute: '2-digit',
+      timeZone: 'Asia/Kolkata', hour12: true
+    });
+    const gw = (2.0 + Math.random() * .9).toFixed(1);
+    document.getElementById('ts').textContent =
+      `India · ${t} · ${gw} GW distributed generation active`;
+  }
+  updateTs();
+  setInterval(updateTs, 60000);
+
+  // Scroll reveal via IntersectionObserver
+  const ro = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); }
+    });
+  }, { threshold: .05 });
+  document.querySelectorAll('.r').forEach(el => ro.observe(el));
+
+  // Hide mobile CTA when join section is in view
+  const mCta = document.getElementById('mcta');
+  mCta.style.transition = 'opacity .3s';
+  new IntersectionObserver(es => {
+    mCta.style.opacity        = es[0].isIntersecting ? '0' : '1';
+    mCta.style.pointerEvents  = es[0].isIntersecting ? 'none' : 'auto';
+  }, { threshold: .2 }).observe(document.getElementById('join'));
+
+  // Form submit
+  function handleSub(e) {
+    e.preventDefault();
+    const b = document.getElementById('subBtn');
+    b.textContent = "You're in ✓";
+    b.style.background = '#166534';
+    b.disabled = true;
+  }
+</script>
+</body>
+</html>
