@@ -1,0 +1,218 @@
+{
+  "info": {
+    "_postman_id": "3696f881-703d-4eef-a6fb-ddf093fbf454",
+    "name": "p2p-trading-ies-wave2-uc1.BUYER-DEG",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for Buyer Application Platform implementing p2p-trading-ies-wave2 APIs based on Beckn Protocol v2"
+  },
+  "item": [
+    {
+      "name": "confirm",
+      "item": [
+        {
+          "name": "confirm-request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"{{domain}}\",\n    \"version\": \"{{version}}\",\n    \"action\": \"confirm\",\n    \"bapId\": \"{{buyerplatform_id}}\",\n    \"bapUri\": \"{{buyerplatform_host_root}}/bap/receiver\",\n    \"bppId\": \"{{sellerplatform_id}}\",\n    \"bppUri\": \"{{sellerplatform_host_root}}/bpp/receiver\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{iso_date}}\",\n    \"schemaContext\": [\n      \"https://schema.beckn.io/EnergyTradeOffer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n      \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\",\n      \"https://schema.beckn.io/SettlementTerm/2.0/context.jsonld\"\n    ]\n  },\n  \"message\": {\n    \"contract\": {\n      \"status\": {\n        \"code\": \"DRAFT\"\n      },\n      \"commitments\": [\n        {\n          \"id\": \"commitment-p2p-001\",\n          \"status\": {\n            \"descriptor\": {\n              \"code\": \"DRAFT\"\n            }\n          },\n          \"resources\": [\n            {\n              \"id\": \"energy-resource-solar-001\",\n              \"descriptor\": {\n                \"name\": \"Solar energy slot - 2026-04-26 10:00-12:00 IST\"\n              },\n              \"quantity\": {\n                \"@type\": \"Quantity\",\n                \"unitCode\": \"KWH\",\n                \"unitQuantity\": 35.0\n              },\n              \"resourceAttributes\": {\n                \"@context\": \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n                \"@type\": \"EnergyResource\",\n                \"type\": \"SOLAR\",\n                \"id\": \"TEST_METER_SELLER_001\"\n              }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-p2p-001\",\n            \"resourceIds\": [\"energy-resource-solar-001\"]\n          },\n          \"commitmentAttributes\": {\n            \"@context\": \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n            \"@type\": \"TimeSeries\",\n            \"intervalPeriod\": {\n              \"start\": \"2026-04-26T04:30:00Z\",\n              \"duration\": \"PT1H\"\n            },\n            \"payloadDescriptors\": [\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"PRICE_PER_KWH\", \"currency\": \"INR\", \"insertedBy\": \"sellerPlatform\"},\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"REQUESTED_QTY\", \"units\": \"KWH\", \"insertedBy\": \"buyerPlatform\"}\n            ],\n            \"intervals\": [\n              {\"id\": 0, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [12.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [20.5]}]},\n              {\"id\": 1, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [14.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [15.5]}]}\n            ]\n          }\n        }\n      ],\n      \"contractAttributes\": {\n        \"@context\": \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n        \"@type\": \"DEGContract\",\n        \"roles\": [\n          {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\"},\n          {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\"},\n          {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\"},\n          {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\"}\n        ],\n        \"policy\": {\n          \"url\": \"https://raw.githubusercontent.com/beckn/DEG/refs/heads/main/specification/policies/p2p_trading_ies_wave2_revenue.rego\",\n          \"queryPath\": \"data.deg.contracts.p2p_trading\"\n        }\n      },\n      \"participants\": [\n        {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_SELLER_001\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"utilityCustomerId\": \"TEST_CUST_SELLER_001\", \"platformUrl\": \"http://sellerapp.example.com:9000\"}},\n        {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_BUYER_001\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"utilityCustomerId\": \"TEST_CUST_BUYER_001\", \"platformUrl\": \"http://buyerapp.example.com:9000\"}},\n        {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"ledgerUrl\": \"{{ledger_host_buyer}}\", \"platformUrl\": \"{{buyer_discom_host_url}}\"}},\n        {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"ledgerUrl\": \"{{ledger_host_seller}}\", \"platformUrl\": \"{{seller_discom_host_url}}\"}}\n      ],\n      \"consideration\": [\n        {\n          \"id\": \"payment-term-p2p-001\",\n          \"considerationAttributes\": {\n            \"@context\": \"https://schema.beckn.io/SettlementTerm/2.0/context.jsonld\",\n            \"@type\": \"SettlementTerm\",\n            \"amount\": {\n              \"currency\": \"INR\",\n              \"value\": 481.0\n            },\n            \"settlementStatus\": \"PENDING\",\n            \"paymentTrigger\": \"ON_FULFILLMENT\",\n            \"payTo\": {\n              \"accountHolderName\": \"Seller Platform Pvt Ltd\",\n              \"accountNumber\": \"0012345678901\",\n              \"branchCode\": \"HDFC0001234\",\n              \"bankName\": \"HDFC Bank\"\n            },\n            \"acceptedPaymentMethods\": [\"BANK_TRANSFER\"]\n          }\n        }\n      ],\n      \"settlements\": [\n        {\n          \"id\": \"settlement-p2p-001\",\n          \"considerationId\": \"payment-term-p2p-001\",\n          \"status\": \"DRAFT\",\n          \"settlementAttributes\": {\n            \"@context\": \"https://schema.beckn.io/SettlementTerm/2.0/context.jsonld\",\n            \"@type\": \"SettlementTerm\",\n            \"settlementFor\": \"Solar energy P2P trade: 35 kWh on 2026-04-26 10:00-12:00 IST\"\n          }\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{bap_caller_url}}/confirm",
+              "host": [
+                "{{bap_caller_url}}"
+              ],
+              "path": [
+                "confirm"
+              ]
+            },
+            "description": "Confirm request: confirm-request"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "discover",
+      "item": [
+        {
+          "name": "discover-request",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"{{domain}}\",\n    \"version\": \"{{version}}\",\n    \"action\": \"discover\",\n    \"bapId\": \"{{buyerplatform_id}}\",\n    \"bapUri\": \"{{buyerplatform_host_root}}/bap/receiver\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{iso_date}}\"\n  },\n  \"message\": {\n    \"intent\": {\n      \"filters\": {\n        \"type\": \"jsonpath\",\n        \"expression\": \"$.catalogs[*].offers[*][?(@.offerAttributes['@type']=='EnergyTradeOffer')]\"\n      }\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{bap_caller_url}}/discover",
+              "host": [
+                "{{bap_caller_url}}"
+              ],
+              "path": [
+                "discover"
+              ]
+            },
+            "description": "Discover request: discover-request"
+          },
+          "response": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "init",
+      "item": [
+        {
+          "name": "init-request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"{{domain}}\",\n    \"version\": \"{{version}}\",\n    \"action\": \"init\",\n    \"bapId\": \"{{buyerplatform_id}}\",\n    \"bapUri\": \"{{buyerplatform_host_root}}/bap/receiver\",\n    \"bppId\": \"{{sellerplatform_id}}\",\n    \"bppUri\": \"{{sellerplatform_host_root}}/bpp/receiver\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{iso_date}}\",\n    \"schemaContext\": [\n      \"https://schema.beckn.io/EnergyTradeOffer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n      \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\",\n      \"https://schema.beckn.io/SettlementTerm/2.0/context.jsonld\"\n    ]\n  },\n  \"message\": {\n    \"contract\": {\n      \"status\": {\n        \"code\": \"DRAFT\"\n      },\n      \"commitments\": [\n        {\n          \"id\": \"commitment-p2p-001\",\n          \"status\": {\n            \"descriptor\": {\n              \"code\": \"DRAFT\"\n            }\n          },\n          \"resources\": [\n            {\n              \"id\": \"energy-resource-solar-001\",\n              \"descriptor\": {\n                \"name\": \"Solar energy slot - 2026-04-26 10:00-12:00 IST\"\n              },\n              \"quantity\": {\n                \"@type\": \"Quantity\",\n                \"unitCode\": \"KWH\",\n                \"unitQuantity\": 35.0\n              },\n              \"resourceAttributes\": {\n                \"@context\": \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n                \"@type\": \"EnergyResource\",\n                \"type\": \"SOLAR\",\n                \"id\": \"TEST_METER_SELLER_001\"\n              }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-p2p-001\",\n            \"resourceIds\": [\"energy-resource-solar-001\"]\n          },\n          \"commitmentAttributes\": {\n            \"@context\": \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n            \"@type\": \"TimeSeries\",\n            \"intervalPeriod\": {\n              \"start\": \"2026-04-26T04:30:00Z\",\n              \"duration\": \"PT1H\"\n            },\n            \"payloadDescriptors\": [\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"PRICE_PER_KWH\", \"currency\": \"INR\", \"insertedBy\": \"sellerPlatform\"},\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"AVAILABLE_QTY\", \"units\": \"KWH\", \"insertedBy\": \"sellerPlatform\"},\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"REQUESTED_QTY\", \"units\": \"KWH\", \"insertedBy\": \"buyerPlatform\"}\n            ],\n            \"intervals\": [\n              {\"id\": 0, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [12.5]}, {\"type\": \"AVAILABLE_QTY\", \"values\": [30.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [20.5]}]},\n              {\"id\": 1, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [14.5]}, {\"type\": \"AVAILABLE_QTY\", \"values\": [25.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [15.5]}]}\n            ]\n          }\n        }\n      ],\n      \"contractAttributes\": {\n        \"@context\": \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n        \"@type\": \"DEGContract\",\n        \"roles\": [\n          {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\"},\n          {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\"},\n          {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\"},\n          {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\"}\n        ],\n        \"policy\": {\n          \"url\": \"https://raw.githubusercontent.com/beckn/DEG/refs/heads/main/specification/policies/p2p_trading_ies_wave2_revenue.rego\",\n          \"queryPath\": \"data.deg.contracts.p2p_trading\"\n        }\n      },\n      \"participants\": [\n        {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_SELLER_001\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"utilityCustomerId\": \"TEST_CUST_SELLER_001\", \"platformUrl\": \"http://sellerapp.example.com:9000\"}},\n        {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_BUYER_001\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"utilityCustomerId\": \"TEST_CUST_BUYER_001\", \"platformUrl\": \"http://buyerapp.example.com:9000\"}},\n        {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"ledgerUrl\": \"{{ledger_host_buyer}}\", \"platformUrl\": \"{{buyer_discom_host_url}}\"}},\n        {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"ledgerUrl\": \"{{ledger_host_seller}}\", \"platformUrl\": \"{{seller_discom_host_url}}\"}}\n      ],\n      \"consideration\": [\n        {\n          \"id\": \"payment-term-p2p-001\",\n          \"considerationAttributes\": {\n            \"@context\": \"https://schema.beckn.io/SettlementTerm/2.0/context.jsonld\",\n            \"@type\": \"SettlementTerm\",\n            \"amount\": {\n              \"currency\": \"INR\",\n              \"value\": 481.0\n            },\n            \"settlementStatus\": \"PENDING\",\n            \"acceptedPaymentMethods\": [\"BANK_TRANSFER\"]\n          }\n        }\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{bap_caller_url}}/init",
+              "host": [
+                "{{bap_caller_url}}"
+              ],
+              "path": [
+                "init"
+              ]
+            },
+            "description": "Init request: init-request"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "item": [
+        {
+          "name": "status-request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"context\": {\n    \"networkId\": \"{{domain}}\",\n    \"version\": \"{{version}}\",\n    \"action\": \"status\",\n    \"bapId\": \"{{buyerplatform_id}}\",\n    \"bapUri\": \"{{buyerplatform_host_root}}/bap/receiver\",\n    \"bppId\": \"{{sellerplatform_id}}\",\n    \"bppUri\": \"{{sellerplatform_host_root}}/bpp/receiver\",\n    \"transactionId\": \"{{transaction_id}}\",\n    \"messageId\": \"{{$guid}}\",\n    \"timestamp\": \"{{iso_date}}\",\n    \"schemaContext\": [\n      \"https://schema.beckn.io/EnergyTradeOffer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n      \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n      \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\"\n    ]\n  },\n  \"message\": {\n    \"contract\": {\n      \"id\": \"contract-p2p-001\",\n      \"status\": {\n        \"code\": \"ACTIVE\"\n      },\n      \"commitments\": [\n        {\n          \"id\": \"commitment-p2p-001\",\n          \"status\": {\n            \"descriptor\": {\n              \"code\": \"ACTIVE\"\n            }\n          },\n          \"resources\": [\n            {\n              \"id\": \"energy-resource-solar-001\",\n              \"descriptor\": {\n                \"name\": \"Solar energy slot - 2026-04-26 10:00-12:00 IST\"\n              },\n              \"quantity\": {\n                \"@type\": \"Quantity\",\n                \"unitCode\": \"KWH\",\n                \"unitQuantity\": 35.5\n              },\n              \"resourceAttributes\": {\n                \"@context\": \"https://schema.beckn.io/EnergyResource/v2.0/context.jsonld\",\n                \"@type\": \"EnergyResource\",\n                \"type\": \"SOLAR\",\n                \"id\": \"TEST_METER_SELLER_001\"\n              }\n            }\n          ],\n          \"offer\": {\n            \"id\": \"offer-p2p-001\",\n            \"resourceIds\": [\"energy-resource-solar-001\"]\n          },\n          \"commitmentAttributes\": {\n            \"@context\": \"https://schema.beckn.io/BecknTimeSeries/v1.0/context.jsonld\",\n            \"@type\": \"TimeSeries\",\n            \"intervalPeriod\": {\n              \"start\": \"2026-04-26T04:30:00Z\",\n              \"duration\": \"PT1H\"\n            },\n            \"payloadDescriptors\": [\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"PRICE_PER_KWH\", \"currency\": \"INR\", \"insertedBy\": \"sellerPlatform\"},\n              {\"objectType\": \"EVENT_PAYLOAD_DESCRIPTOR\", \"payloadType\": \"REQUESTED_QTY\", \"units\": \"KWH\", \"insertedBy\": \"buyerPlatform\"}\n            ],\n            \"intervals\": [\n              {\"id\": 0, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [12.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [20.5]}]},\n              {\"id\": 1, \"payloads\": [{\"type\": \"PRICE_PER_KWH\", \"values\": [14.5]}, {\"type\": \"REQUESTED_QTY\", \"values\": [15.5]}]}\n            ]\n          }\n        }\n      ],\n      \"contractAttributes\": {\n        \"@context\": \"https://schema.beckn.io/DEGContract/v2.0/context.jsonld\",\n        \"@type\": \"DEGContract\",\n        \"roles\": [\n          {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\"},\n          {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\"},\n          {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\"},\n          {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\"}\n        ],\n        \"policy\": {\n          \"url\": \"https://raw.githubusercontent.com/beckn/DEG/refs/heads/main/specification/policies/p2p_trading_ies_wave2_revenue.rego\",\n          \"queryPath\": \"data.deg.contracts.p2p_trading\"\n        }\n      },\n      \"participants\": [\n        {\"role\": \"sellerPlatform\", \"participantId\": \"sellerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_SELLER_001\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"utilityCustomerId\": \"TEST_CUST_SELLER_001\", \"platformUrl\": \"http://sellerapp.example.com:9000\"}},\n        {\"role\": \"buyerPlatform\", \"participantId\": \"buyerapp.example.com\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/EnergyCustomer/v2.0/context.jsonld\", \"@type\": \"EnergyCustomer\", \"meterId\": \"TEST_METER_BUYER_001\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"utilityCustomerId\": \"TEST_CUST_BUYER_001\", \"platformUrl\": \"http://buyerapp.example.com:9000\"}},\n        {\"role\": \"buyerDiscom\", \"participantId\": \"{{ledger_buyer_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_BUYER\", \"ledgerUrl\": \"{{ledger_host_buyer}}\", \"platformUrl\": \"{{buyer_discom_host_url}}\"}},\n        {\"role\": \"sellerDiscom\", \"participantId\": \"{{ledger_seller_discom_id}}\", \"participantAttributes\": {\"@context\": \"https://schema.beckn.io/DiscomLedgerProvider/v1.0/context.jsonld\", \"@type\": \"DiscomLedgerProvider\", \"utilityId\": \"TEST_DISCOM_SELLER\", \"ledgerUrl\": \"{{ledger_host_seller}}\", \"platformUrl\": \"{{seller_discom_host_url}}\"}}\n      ]\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{bap_caller_url}}/status",
+              "host": [
+                "{{bap_caller_url}}"
+              ],
+              "path": [
+                "status"
+              ]
+            },
+            "description": "Status request: status-request"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Pure JS pre-request script to replace moment()",
+          "// 1) ISO 8601 timestamp without needing moment",
+          "const isoTimestamp = new Date().toISOString();",
+          "pm.collectionVariables.set('iso_date', isoTimestamp);",
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "domain",
+      "value": "nfh.global/testnet-deg"
+    },
+    {
+      "key": "version",
+      "value": "2.0.0"
+    },
+    {
+      "key": "buyerplatform_id",
+      "value": "buyerapp.example.com"
+    },
+    {
+      "key": "sellerplatform_id",
+      "value": "sellerapp.example.com"
+    },
+    {
+      "key": "transaction_id",
+      "value": "2b4d69aa-22e4-4c78-9f56-5a7b9e2b2026"
+    },
+    {
+      "key": "iso_date",
+      "value": ""
+    },
+    {
+      "key": "buyerplatform_host_root",
+      "value": "http://buyerapp.example.com:9000"
+    },
+    {
+      "key": "sellerplatform_host_root",
+      "value": "http://sellerapp.example.com:9000"
+    },
+    {
+      "key": "bap_caller_url",
+      "value": "http://localhost:8081/bap/caller"
+    },
+    {
+      "key": "ledger_host_buyer",
+      "value": "https://ies-p2p-energy-ledger.beckn.io"
+    },
+    {
+      "key": "ledger_host_seller",
+      "value": "https://ies-p2p-energy-ledger.beckn.io"
+    },
+    {
+      "key": "buyer_discom_host_url",
+      "value": "http://buyer-discom.example.com:9000"
+    },
+    {
+      "key": "seller_discom_host_url",
+      "value": "http://seller-discom.example.com:9000"
+    },
+    {
+      "key": "ledger_buyer_discom_id",
+      "value": "ies-p2p-energy-ledger.beckn.io"
+    },
+    {
+      "key": "ledger_seller_discom_id",
+      "value": "ies-p2p-energy-ledger.beckn.io"
+    }
+  ]
+}

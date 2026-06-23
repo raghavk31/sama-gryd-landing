@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/sama-landing.html" }
+    { "source": "/", "destination": "/sama-foundation.html" }
   ]
 }

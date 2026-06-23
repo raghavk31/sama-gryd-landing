@@ -1,0 +1,29 @@
+# OPA policy config consumed by the `opapolicychecker` plugin.
+#
+# Each entry is keyed by full networkId. The `default:` entry is the
+# fallback for any networkId without a dedicated entry.
+#
+# Both the dedicated `nfh.global/testnet-deg` entry and the fallback
+# query the same `violations` rule, which enforces:
+#
+#   - BecknTimeSeries cross-field type-coverage (every payload type
+#     used in intervals[*].payloads[*].type is declared in the
+#     meter's payloadDescriptors).
+#   - PER_EVENT / PER_INTERVAL cardinality against the seller's
+#     committed reportDescriptors[]. Self-skips when no offer block
+#     or no declared types are on the wire, so traffic without
+#     vendor reportDescriptors passes transparently.
+#
+# Plugin docs:
+#   https://github.com/beckn/beckn-onix/blob/main/pkg/plugin/implementation/opapolicychecker/README.md
+
+networkPolicies:
+  default:
+    type: file
+    location: ./policies/demand_flex_network.rego
+    query: data.deg.policy.demand_flex_network.violations
+
+  nfh.global/testnet-deg:
+    type: file
+    location: ./policies/demand_flex_network.rego
+    query: data.deg.policy.demand_flex_network.violations

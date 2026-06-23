@@ -1,0 +1,413 @@
+arazzo: 1.0.1
+info:
+  title: P2P Trading (Wave 2) Workflow
+  version: 1.0.0
+  description: >
+    End-to-end Beckn 2.0 LTS workflow for inter-discom Peer-to-Peer energy
+    trading. Scenario: a prosumer on TPDDL (seller) publishes a 1-hour solar
+    slot; a prosumer on BRPL (buyer) selects, confirms, and settles after
+    meter-data reconciliation. The contract names four roles — buyer, seller,
+    buyerDiscom, sellerDiscom — and the linked rego computes net revenueFlows.
+
+    Per-node hostname design (wave2):
+      buyer.beckn-router         — onix-buyerapp (BAP role)
+      seller.beckn-router        — onix-sellerapp (BPP role)
+      sellerdiscom.beckn-router  — onix-ledger-sellerdiscom (BPP-role discom)
+      buyerdiscom.beckn-router   — onix-ledger-buyerdiscom (BAP-role discom, sink)
+
+    Cascade chain (purely plugin-automated):
+      buyer/bap/caller  --status-->     seller/bpp/receiver
+      seller            --status-->     sellerdiscom/bpp/receiver   (Rule 1)
+      sellerdiscom      --on_status-->  seller/bap/receiver
+      seller            --on_status-->  buyer/bap/receiver          (Rule 2a)
+      buyer             --on_status-->  buyerdiscom/bap/receiver    (Rule 2b)
+
+    Meter-data sub-transactions (ledger ↔ discom utility):
+      sellerdiscom-ledger/bap/caller  --status-->     sellerdiscom/bpp/receiver
+      buyerdiscom-ledger/bap/caller   --status-->     buyerdiscom/bpp/receiver
+      sellerdiscom/bpp/caller         --on_status-->  sellerdiscom-ledger/bap/receiver
+      buyerdiscom/bpp/caller          --on_status-->  buyerdiscom-ledger/bap/receiver
+
+    Rule 1: /status at /bpp/receiver → cascade to own discom (sellerDiscom.ledgerUrl).
+    Rule 2: /on_status at /bap/receiver → check context.bppId:
+        if it matches own discom's participantId → forward to peer's /bap/receiver,
+        else → cascade to own discom's ledgerUrl.
+
+    Run with Redocly respect (from p2p-trading-ies-wave2/):
+
+      Run all workflows:
+        npx @redocly/cli respect workflows/p2p-trading-ies-wave2.arazzo.yaml -v
+
+      Run a single workflow:
+        npx @redocly/cli respect workflows/p2p-trading-ies-wave2.arazzo.yaml \
+          -w status-roundtrip-via-seller-discom -v
+
+      Available workflows: publish-catalog, discover, select-through-settlement,
+        status-roundtrip-via-seller-discom, buyer-discom-emits-on-status,
+        seller-status-to-buyer, seller-status-to-seller-discom,
+        sellerdiscom-pushes-allocation, buyerdiscom-pushes-allocation,
+        sellerdiscom-pushes-settled-on-status, buyerdiscom-pushes-settled-on-status,
+        sellerdiscom-ledger-requests-meter-data,
+        buyerdiscom-ledger-requests-meter-data
+
+sourceDescriptions:
+  - name: beckn-bap-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8081/bap/caller
+
+  - name: beckn-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8082/bpp/caller
+
+  - name: beckn-sellerdiscom-ledger-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8083/bpp/caller
+
+  - name: beckn-buyerdiscom-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8084/bpp/caller
+
+  # Sellerapp's /bap/caller — used for seller-initiated requests (status to
+  # buyer for buyer-discom alloc, or status to seller-discom for settlement).
+  - name: beckn-seller-bap-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8082/bap/caller
+
+  # Sellerdiscom — the seller-side distribution utility (distinct
+  # from the seller-discom-ledger TSP). Beckn-native channel for pushing
+  # meter actuals (DatasetItem-wrapped BecknTimeSeries) as on_status.
+  - name: beckn-sellerdiscom-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8086/bpp/caller
+
+  # Buyerdiscom — the buyer-side distribution utility (distinct from the
+  # buyer-discom-ledger TSP). Symmetric counterpart to beckn-sellerdiscom-bpp-caller.
+  - name: beckn-buyerdiscom-actor-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8085/bpp/caller
+
+  # SellerDiscom Ledger /bap/caller — outbound status requests to the
+  # sellerdiscom utility (ledger acting as BAP for meter-data sub-tx).
+  - name: beckn-sellerdiscom-ledger-bap-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8083/bap/caller
+
+  # BuyerDiscom Ledger /bap/caller — outbound status requests to the
+  # buyerdiscom utility (ledger acting as BAP for meter-data sub-tx).
+  - name: beckn-buyerdiscom-ledger-bap-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8084/bap/caller
+
+workflows:
+  # ── Catalog & Discovery ──
+
+  - workflowId: publish-catalog
+    summary: Seller TP publishes a P2P solar offer with delivery window and price terms
+    steps:
+      - stepId: publish-catalog
+        description: BPP publishes EnergyResource + EnergyTradeOffer catalog
+        operationId: beckn-bpp-caller.catalogPublish
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/publish-catalog.json"
+
+  - workflowId: discover
+    summary: Buyer TP discovers available P2P solar offers via discover service
+    steps:
+      - stepId: discover
+        description: BAP discovers PER_KWH EnergyTradeOffer entries on the network
+        operationId: beckn-bap-caller.discover
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/discover-request.json"
+
+  # ── Contract lifecycle: select → confirm → settlement ──
+
+  - workflowId: select-through-settlement
+    summary: Buyer selects, confirms, and settles
+    steps:
+      - stepId: init
+        description: Buyer TP provides buyer-side identity (meter, utility, customer ID)
+        operationId: beckn-bap-caller.init
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/init-request.json"
+
+      - stepId: on-init
+        description: Seller TP acknowledges buyer-side identity (DRAFT)
+        operationId: beckn-bpp-caller.onInit
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-init-response.json"
+
+      - stepId: confirm
+        description: Buyer TP confirms the P2P trade contract
+        operationId: beckn-bap-caller.confirm
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/confirm-request.json"
+
+      - stepId: on-confirm
+        description: Seller TP confirms contract is ACTIVE — both TPs log in their discom ledgers (off-band)
+        operationId: beckn-bpp-caller.onConfirm
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-confirm-response.json"
+
+      - stepId: on-status-settled
+        description: >
+          Phase 5 — after physical delivery and discom-ledger reconciliation,
+          Seller TP reports allocations + settled qty. The revenueflows
+          middleware evaluates the linked rego and emits revenueFlows.
+        operationId: beckn-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-status-response-settled.json"
+
+  # ── Status cascade via sellerDiscom ──
+
+  - workflowId: status-roundtrip-via-seller-discom
+    summary: >
+      Buyer sends /status → seller cascades /status to sellerDiscom (Rule 1) →
+      sellerDiscom emits /on_status (simulated by step 2) → seller's /bap/receiver
+      forwards to buyer (Rule 2a) → buyer's /bap/receiver cascades to buyerDiscom
+      (Rule 2b). All steps return ACK; no fan-out loops; chain is linear.
+    steps:
+      - stepId: buyer-sends-status
+        description: >
+          Buyer/bap/caller sends /status to seller/bpp/receiver. Seller's
+          degledgerrecorder cascades /status to sellerDiscom/bpp/receiver
+          (Rule 1). sellerDiscom mock then asynchronously emits /on_status
+          via its /bpp/caller back to seller/bap/receiver, kicking off the
+          downstream cascade (Rules 2a → 2b).
+        operationId: beckn-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/status-request.json"
+
+      - stepId: seller-discom-responds-on-status
+        description: >
+          Explicit synchronous simulation of the sellerDiscom on_status response
+          (the async path above does the same thing but timing-dependent).
+          Posts to sellerdiscom/bpp/caller, which routes /on_status to
+          seller/bap/receiver. The recorder there detects context.bppId
+          matches sellerDiscom.participantId (Rule 2a) → forwards to
+          buyer/bap/receiver → cascades to buyerDiscom (Rule 2b).
+        operationId: beckn-sellerdiscom-ledger-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/sellerdiscom/on_status.json"
+
+  # ── Seller-initiated status workflows ──
+
+  - workflowId: seller-status-to-buyer
+    summary: >
+      Sellerapp asks buyerapp about buyer-discom allocation status. Sellerapp's
+      /bap/caller signs the status request; buyerapp's /bpp/receiver runs the
+      recorder (reverse of Rule 1) which cascades /status to buyer-discom-ledger.
+    steps:
+      - stepId: seller-sends-status-to-buyer
+        description: >
+          Seller-initiated status routed seller/bap/caller → buyer/bpp/receiver.
+          The recorder on buyer/bpp/receiver cascades to buyer-discom-ledger
+          /bpp/receiver/status. buyer-discom-ledger then emits on_status via
+          /bpp/caller back to seller/bap/receiver (the original BAP for this
+          sub-tx).
+        operationId: beckn-seller-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/seller-initiated-status-to-buyer.json"
+
+  - workflowId: seller-status-to-seller-discom
+    summary: >
+      Sellerapp asks its own seller-discom-ledger about settlement status,
+      directly (no buyer involvement). The ledger emits on_status via
+      /bpp/caller back to seller/bap/receiver.
+    steps:
+      - stepId: seller-sends-status-to-seller-discom
+        description: >
+          Seller-initiated status routed seller/bap/caller → seller-discom-ledger
+          /bpp/receiver. ACK is synchronous; the on_status callback follows
+          asynchronously from the ledger sandbox.
+        operationId: beckn-seller-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/seller-initiated-status-to-seller-discom.json"
+
+  # ── SellerDiscom *actor* pushes allocation via on_status ──
+
+  - workflowId: sellerdiscom-pushes-allocation
+    summary: >
+      Sellerdiscom (the discom utility itself, distinct from the
+      seller-discom-ledger TSP) pushes meter actuals to the ledger as a
+      Beckn `on_status`. The payload wraps the BecknTimeSeries readings
+      inside a `DatasetItem` resource (data-exchange schema) so the ledger
+      can treat the dataset payload as the unit of allocation.
+    steps:
+      - stepId: sellerdiscom-emits-allocation-on-status
+        description: >
+          POSTs to sellerdiscom /bpp/caller; the onix routes
+          via context.bapUri (= seller-discom-ledger /bap/receiver). The
+          ledger reads resources[].resourceAttributes.@type=DatasetItem,
+          matches dataset:targetTransactionId / targetOrderItemId, and
+          allocates. Returns ACK.
+        operationId: beckn-sellerdiscom-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/sellerdiscom-on-status.json"
+
+  # ── BuyerDiscom-emitted on_status (direct callback path) ──
+
+  - workflowId: buyer-discom-emits-on-status
+    summary: >
+      Symmetric counterpart: buyerDiscom ledger directly emits /on_status via
+      its /bpp/caller, addressed at buyer/bap/receiver. The buyer recorder
+      recognizes context.bppId == buyerDiscom.participantId (Rule 2a) and
+      forwards to the peer (seller) /bap/receiver; seller then cascades to
+      sellerDiscom (Rule 2b) when performance data is present.
+    steps:
+      - stepId: buyer-discom-responds-on-status
+        description: >
+          Direct POST to buyerdiscom/bpp/caller. Mirrors the sellerDiscom test
+          above but exercises the buyer-side ledger callback path. Exercises
+          the BUYERDISCOMLEDGER postman collection.
+        operationId: beckn-buyerdiscom-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/buyerdiscom/on_status.json"
+
+  # ── BuyerDiscom *actor* pushes allocation via on_status ──
+
+  - workflowId: buyerdiscom-pushes-allocation
+    summary: >
+      BuyerDiscom (the buyer-side discom utility, distinct from the
+      buyer-discom-ledger TSP) pushes meter actuals to the ledger as a
+      Beckn `on_status`. Symmetric counterpart to sellerdiscom-pushes-allocation.
+      The payload wraps BecknTimeSeries readings inside a DatasetItem resource.
+    steps:
+      - stepId: buyerdiscom-emits-allocation-on-status
+        description: >
+          POSTs to buyerdiscom/bpp/caller; onix routes via context.bapUri
+          (= buyer-discom-ledger /bap/receiver). The ledger reads
+          resources[].resourceAttributes.@type=DatasetItem and allocates.
+          Returns ACK.
+        operationId: beckn-buyerdiscom-actor-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/buyerdiscom-on-status.json"
+
+  # ── Settled on_status via sellerDiscom cascade (full offer context + real FINAL_ALLOC) ──
+
+  - workflowId: sellerdiscom-pushes-settled-on-status
+    summary: >
+      SellerDiscom emits a fully-settled /on_status carrying the complete offer
+      context (offerAttributes.commitmentAttributes with AVAILABLE_QTY intervals)
+      and all seven commitmentAttributes payload types with real values, including
+      FINAL_ALLOC. Exercises OPA rules P3 (FINAL_ALLOC ids subset of seller offer
+      ids) and P4 (FINAL_ALLOC <= min(BUYER_DISCOM_ALLOC, SELLER_DISCOM_ALLOC)).
+      bppId=seller-discom-ledger.example.com triggers Rule 2a cascade at
+      seller/bap/receiver → buyer/bap/receiver → buyerDiscom (Rule 2b).
+    steps:
+      - stepId: sellerdiscom-emits-settled-on-status
+        description: >
+          POST to sellerdiscom-ledger/bpp/caller (port 8083). The settled payload
+          includes offerAttributes.commitmentAttributes (AVAILABLE_QTY offer
+          intervals) so the network-policy P3 interval-coverage check can fire.
+          All seven commitmentAttributes payload types are populated with real
+          values: PRICE_PER_KWH, REQUESTED_QTY, BUYER_DISCOM_ALLOC,
+          BUYER_DISCOM_STATUS, SELLER_DISCOM_ALLOC, SELLER_DISCOM_STATUS,
+          FINAL_ALLOC. FINAL_ALLOC=min(BUYER,SELLER) so P4 passes.
+        operationId: beckn-sellerdiscom-ledger-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/sellerdiscom/on_status_settled.json"
+
+  # ── Settled on_status via buyerDiscom callback (full offer context + real FINAL_ALLOC) ──
+
+  - workflowId: buyerdiscom-pushes-settled-on-status
+    summary: >
+      BuyerDiscom emits a fully-settled /on_status carrying the complete offer
+      context and all seven commitmentAttributes payload types with real values.
+      Symmetric counterpart to sellerdiscom-pushes-settled-on-status.
+      bppId=buyer-discom-ledger.example.com triggers Rule 2a at buyer/bap/receiver
+      → seller/bap/receiver → sellerDiscom (Rule 2b).
+    steps:
+      - stepId: buyerdiscom-emits-settled-on-status
+        description: >
+          POST to buyerdiscom-ledger/bpp/caller (port 8084). The settled payload
+          includes offerAttributes.commitmentAttributes (AVAILABLE_QTY offer
+          intervals) so the network-policy P3 interval-coverage check can fire.
+          All seven commitmentAttributes payload types are populated with real
+          values. FINAL_ALLOC=min(BUYER,SELLER) so P4 passes.
+        operationId: beckn-buyerdiscom-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/buyerdiscom/on_status_settled.json"
+
+  # ── Meter-data request: seller-discom-ledger → sellerdiscom utility ──
+
+  - workflowId: sellerdiscom-ledger-requests-meter-data
+    summary: >
+      Seller-discom-ledger sends a `status` request (as BAP) to the sellerdiscom
+      utility /bpp/receiver, asking for meter energy-consumption data for the
+      delivery window. The request body is a DatasetItem with an array of
+      BecknTimeSeries objects (one per meter), with empty values[] to signal
+      a data request. The utility ACKs synchronously; in production it would
+      fire on_status back via sellerdiscom/bpp/caller with measured values.
+    steps:
+      - stepId: ledger-requests-meter-data
+        description: >
+          POST to seller-discom-ledger /bap/caller. onix routes via
+          context.bppUri (= sellerdiscom /bpp/receiver). The discom utility
+          ACKs. In the devkit, the subsequent on_status push is exercised
+          separately by the sellerdiscom-pushes-allocation workflow.
+        operationId: beckn-sellerdiscom-ledger-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/sellerdiscom/status-request.json"
+
+  # ── Meter-data request: buyer-discom-ledger → buyerdiscom utility ──
+
+  - workflowId: buyerdiscom-ledger-requests-meter-data
+    summary: >
+      Buyer-discom-ledger sends a `status` request (as BAP) to the buyerdiscom
+      utility /bpp/receiver, asking for meter energy-consumption data for the
+      delivery window. Symmetric counterpart to sellerdiscom-ledger-requests-meter-data.
+    steps:
+      - stepId: ledger-requests-meter-data
+        description: >
+          POST to buyer-discom-ledger /bap/caller. onix routes via
+          context.bppUri (= buyerdiscom /bpp/receiver). The discom utility
+          ACKs. In the devkit, the subsequent on_status push is exercised
+          separately by the buyerdiscom-pushes-allocation workflow.
+        operationId: beckn-buyerdiscom-ledger-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../../responses/buyerdiscom/status-request.json"

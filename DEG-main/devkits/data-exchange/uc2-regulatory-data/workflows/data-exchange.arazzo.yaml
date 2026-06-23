@@ -1,0 +1,94 @@
+arazzo: 1.0.1
+info:
+  title: Energy Data Exchange — UC2 (Regulatory ARR Filing)
+  version: 2.0.0
+  description: >
+    Minimal Beckn 2.0 workflow for ARR filing data exchange using DatasetItem
+    with IES_ARR_Filing dataPayload. Covers the value-adding steps only:
+    publish, discover, confirm, and data delivery via on_status.
+
+    Run (from uc2-regulatory-data/workflows/):
+      docker compose up -d          # in install/
+      ./run-arazzo.sh               # publish → discover
+      ./run-arazzo.sh -w confirm-through-delivery -v
+
+    Override server URLs:
+      -S beckn-bap-caller=http://localhost:8081/bap/caller \
+      -S beckn-bpp-caller=http://localhost:8082/bpp/caller
+
+sourceDescriptions:
+  - name: beckn-bap-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8081/bap/caller
+
+  - name: beckn-bpp-caller
+    type: openapi
+    url: https://raw.githubusercontent.com/beckn/protocol-specifications-v2/refs/tags/core-v2.0.0-lts/api/v2.0.0/beckn.yaml
+    x-serverUrl: http://localhost:8082/bpp/caller
+
+workflows:
+  - workflowId: publish-catalog
+    summary: BESCOM publishes ARR filing dataset catalog
+    steps:
+      - stepId: publish-catalog
+        operationId: beckn-bpp-caller.catalogPublish
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/publish-catalog.json"
+
+  - workflowId: discover
+    summary: APERC discovers available ARR filing datasets
+    steps:
+      - stepId: discover
+        operationId: beckn-bap-caller.discover
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/discover-request.json"
+
+  - workflowId: confirm-through-delivery
+    summary: APERC confirms and receives ARR filing data
+    steps:
+      - stepId: confirm
+        description: BAP confirms contract with payment (zero-value for regulatory submission)
+        operationId: beckn-bap-caller.confirm
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/confirm-request.json"
+
+      - stepId: on-confirm
+        description: BPP acknowledges and begins dataset preparation
+        operationId: beckn-bpp-caller.onConfirm
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-confirm-response.json"
+
+      - stepId: status
+        description: BAP polls for delivery readiness
+        operationId: beckn-bap-caller.status
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/status-request.json"
+
+      - stepId: on-status-ready-url
+        description: BPP delivers ARR filing data via signed download URL
+        operationId: beckn-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-status-response-ready-url.json"
+
+      - stepId: on-status-ready-inline
+        description: >
+          Alternative: BPP delivers ARR filing data inline via dataPayload
+          (IES_ARR_Filing embedded in on_status performanceAttributes).
+        operationId: beckn-bpp-caller.onStatus
+        requestBody:
+          contentType: application/json
+          payload:
+            $ref: "../examples/on-status-response-ready-inline.json"
